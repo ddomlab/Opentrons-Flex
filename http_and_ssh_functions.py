@@ -1,6 +1,6 @@
 """
-Functions for uploading and running a new protocol to the Flex and downloading a file from the Flex to a local computer
-using scp.
+Functions for uploading and running a new protocol to the Flex and downloading a file from the Flex to
+a local computer using scp. Make sure to change the ROBOT_IP variable if necessary.
 """
 
 import requests
@@ -8,7 +8,7 @@ import json
 import paramiko
 from scp import SCPClient
 
-# The IP of the Flex
+# The IP of the Flex, change if necessary
 ROBOT_IP = "10.154.3.53"
 # The index at which a protocol/run ID starts. The ID is returned by requests.post()
 ID_START_IDX = 17
@@ -18,8 +18,8 @@ ID_LENGTH = 36
 """
 Uploads a new protocol to the Flex and runs it.
 @param robot_ip is the Wired or Wireless IP of the Flex
-@param protocol_file is the filename of the protocol to upload and run. Make sure the directory you run this script in
-has the protocol_file in it
+@param protocol_file is the filename of the protocol to upload and run. Make sure the directory you run this 
+script in has the protocol_file in it
 @return the status code of the post request
 """
 def run_protocol(robot_ip: str, protocol_file: str):
@@ -55,7 +55,13 @@ def run_protocol(robot_ip: str, protocol_file: str):
     response = requests.post(url, headers=headers, data=json.dumps(data))
     return response.status_code
 
-
+"""
+Downloads a file from the Flex to a local computer using scp.
+@param robot_ip is the Wired or Wireless IP of the Flex
+@param remote_path is the path to download the file from (should point to a file)
+@param local_path is the path to download the file to (should point to a folder)
+@param private_key_path is the path to the private key file (should point to flex_key)
+"""
 def download_file(robot_ip: str, remote_path: str, local_path: str, private_key_path: str):
 
     # Create the SSH client
@@ -66,7 +72,7 @@ def download_file(robot_ip: str, remote_path: str, local_path: str, private_key_
     key = paramiko.RSAKey.from_private_key_file(private_key_path)
 
     # Connect to the remote server
-    ssh.connect(hostname=ROBOT_IP, username="root", pkey=key)
+    ssh.connect(hostname=robot_ip, username="root", pkey=key)
 
     # Create SCP client
     with SCPClient(ssh.get_transport()) as scp:
@@ -75,8 +81,3 @@ def download_file(robot_ip: str, remote_path: str, local_path: str, private_key_
 
     # Close the SSH connection
     ssh.close()
-
-remote_path = "/var/lib/jupyter/notebooks/weights/weights_first.csv"
-local_path = "/Users/stephenstewart/Desktop/developer/summer-2024/opentrons/protocols"
-private_key_path = "/Users/stephenstewart/Desktop/developer/summer-2024/opentrons/protocols/flex_key"
-download_file(ROBOT_IP, remote_path, local_path, private_key_path)
