@@ -7,9 +7,10 @@ import requests
 import json
 import paramiko
 from scp import SCPClient
+import time
 
 # The IP of the Flex, change if necessary
-ROBOT_IP = "10.154.3.53"
+ROBOT_IP = "172.20.10.4"
 # The index at which a protocol/run ID starts. The ID is returned by requests.post()
 ID_START_IDX = 17
 # The string length of a protocol/run ID
@@ -20,7 +21,7 @@ Uploads a new protocol to the Flex and runs it.
 @param robot_ip is the Wired or Wireless IP of the Flex
 @param file_paths is a list of the files to upload to the Flex. It should contain at least one protocol file to run and 
 any amount of custom labware files needed. Each element of the list is a string containing the path to the file.
-@return the status code of the post request
+@return a tuple containing the status code of the post request and the run ID
 """
 def run_protocol(robot_ip: str, file_paths: list[str]):
 
@@ -56,7 +57,7 @@ def run_protocol(robot_ip: str, file_paths: list[str]):
         }
     }
     response = requests.post(url, headers=headers, data=json.dumps(data))
-    return response.status_code
+    return response.status_code, run_id
 
 """
 Downloads a file from the Flex to a local computer using scp.
@@ -84,3 +85,26 @@ def download_file(robot_ip: str, remote_path: str, local_path: str, private_key_
 
     # Close the SSH connection
     ssh.close()
+
+
+"""
+Waits until a protocol run is finished. Use before run_protocol() or download_file() when a protocol is 
+already running.
+@param robot_ip is the Wired or Wireless IP of the Flex
+@param run_id is the Run ID of a protocol returned by run_protocol()
+"""
+def wait_for_run_finish(robot_ip: str, run_id: str):
+
+    url = "http://" + ROBOT_IP + ":31950/runs/" + run_id
+    headers = {"Opentrons-Version": "3"}
+    response = requests.get(url=url, headers=headers)
+    status = json.loads(response.text)
+    run_status = status["data"]["status"]
+
+    # Loop and wait until the status of the run is "succeeded"
+    while run_status != "succeeded":
+        # Wait 30 seconds, then check again
+        time.sleep(30)
+        response = requests.get(url=url, headers=headers)
+        status = json.loads(response.text)
+        run_status = status["data"]["status"]
