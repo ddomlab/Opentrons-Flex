@@ -18,18 +18,21 @@ ID_LENGTH = 36
 """
 Uploads a new protocol to the Flex and runs it.
 @param robot_ip is the Wired or Wireless IP of the Flex
-@param protocol_file is the filename of the protocol to upload and run. Make sure the directory you run this 
-script in has the protocol_file in it
+@param file_paths is a list of the files to upload to the Flex. It should contain at least one protocol file to run and 
+any amount of custom labware files needed. Each element of the list is a string containing the path to the file.
 @return the status code of the post request
 """
-def run_protocol(robot_ip: str, protocol_file: str):
+def run_protocol(robot_ip: str, file_paths: list[str]):
 
     # Upload a new protocol to the Flex
     url = "http://" + robot_ip + ":31950/protocols"
     headers = {"Opentrons-Version": "3"}
-    files = {"files": open(protocol_file, "rb")}
+    files = [("files", open(file_path, "rb")) for file_path in file_paths]
     response = requests.post(url, headers=headers, files=files)
     protocol_id = response.text[ID_START_IDX:(ID_START_IDX + ID_LENGTH)]
+    # Close the files after the request
+    for file in files:
+        file[1].close()
 
     # Create a protocol "run"
     url = "http://" + robot_ip + ":31950/runs"
