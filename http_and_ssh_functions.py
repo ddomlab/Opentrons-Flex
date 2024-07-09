@@ -95,7 +95,7 @@ already running.
 """
 def wait_for_run_finish(robot_ip: str, run_id: str):
 
-    url = "http://" + ROBOT_IP + ":31950/runs/" + run_id
+    url = "http://" + robot_ip + ":31950/runs/" + run_id
     headers = {"Opentrons-Version": "3"}
     response = requests.get(url=url, headers=headers)
     status = json.loads(response.text)
