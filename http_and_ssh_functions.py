@@ -10,11 +10,8 @@ from scp import SCPClient
 import time
 
 # The IP of the Flex, change if necessary
-ROBOT_IP = "172.20.10.4"
-# The index at which a protocol/run ID starts. The ID is returned by requests.post()
-ID_START_IDX = 17
-# The string length of a protocol/run ID
-ID_LENGTH = 36
+ROBOT_IP = "10.154.3.53"
+
 
 """
 Uploads a new protocol to the Flex and runs it.
@@ -30,7 +27,8 @@ def run_protocol(robot_ip: str, file_paths: list[str]):
     headers = {"Opentrons-Version": "3"}
     files = [("files", open(file_path, "rb")) for file_path in file_paths]
     response = requests.post(url, headers=headers, files=files)
-    protocol_id = response.text[ID_START_IDX:(ID_START_IDX + ID_LENGTH)]
+    response_dict = json.loads(response.text)
+    protocol_id = response_dict["data"]["id"]
     # Close the files after the request
     for file in files:
         file[1].close()
@@ -47,7 +45,8 @@ def run_protocol(robot_ip: str, file_paths: list[str]):
         }
     }
     response = requests.post(url, headers=headers, data=json.dumps(data))
-    run_id = response.text[ID_START_IDX:(ID_START_IDX + ID_LENGTH)]
+    response_dict = json.loads(response.text)
+    run_id = response_dict["data"]["id"]
 
     # Start the protocol run
     url = "http://" + robot_ip + ":31950/runs/" + run_id + "/actions"
@@ -58,6 +57,7 @@ def run_protocol(robot_ip: str, file_paths: list[str]):
     }
     response = requests.post(url, headers=headers, data=json.dumps(data))
     return response.status_code, run_id
+
 
 """
 Downloads a file from the Flex to a local computer using scp.
@@ -106,5 +106,5 @@ def wait_for_run_finish(robot_ip: str, run_id: str):
         # Wait 30 seconds, then check again
         time.sleep(30)
         response = requests.get(url=url, headers=headers)
-        status = json.loads(response.text)
-        run_status = status["data"]["status"]
+        status_dict = json.loads(response.text)
+        run_status = status_dict["data"]["status"]
