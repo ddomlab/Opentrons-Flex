@@ -1,6 +1,6 @@
 """
 Functions for uploading and running a new protocol to the Flex and downloading a file from the Flex to
-a local computer using scp. Make sure to change the ROBOT_IP variable if necessary.
+a local computer using scp.
 """
 
 import requests
@@ -8,9 +8,6 @@ import json
 import paramiko
 from scp import SCPClient
 import time
-
-# The IP of the Flex, change if necessary
-ROBOT_IP = "10.154.3.53"
 
 
 """
